@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background-color: #f4f6f9; }
+    h2 { color: #111; margin-bottom: 10px; }
+    input { width: 90%; max-width: 380px; padding: 12px; margin-bottom: 15px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+    #startBtn { width: 90%; max-width: 380px; padding: 14px; font-size: 18px; background-color: #2874f0; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
+    #reader { width: 100%; max-width: 400px; margin: auto; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #status { color: #0d8a00; font-weight: bold; font-size: 18px; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+  <h2>Flipkart High-Speed Scanner</h2>
+  
+  <input type="text" id="boyName" placeholder="Delivery Boy Ka Naam (e.g. Suraj)">
+  <br>
+  
+  <button id="startBtn" onclick="initCamera()">START CAMERA SCANNER</button>
+
+  <div id="reader"></div>
+  <div id="status">Status: Click "START CAMERA SCANNER" Button Above</div>
+
+  <script>
+    const webAppUrl = "https://script.google.com/macros/s/AKfycby6YllCCr4U6RxnyGsJftdaN1EtL27-16VyKlFhPs6VoW1eJGDcQYMIKEpWdkAoD1U7/exec";
+
+    function initCamera() {
+      let boyName = document.getElementById("boyName").value.trim();
+      if (!boyName) {
+        alert("Pehle Delivery Boy Ka Naam Daalein!");
+        return;
+      }
+      
+      document.getElementById("startBtn").style.display = "none";
+      document.getElementById("status").innerText = "Requesting Camera Access...";
+
+      let html5QrCode = new Html5QrCode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        { fps: 20, qrbox: { width: 280, height: 160 } },
+        (decodedText) => {
+          document.getElementById("status").innerText = "Saving: " + decodedText;
+          let beep = new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3');
+          beep.play();
+
+          fetch(webAppUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "boyName=" + encodeURIComponent(boyName) + "&barcode=" + encodeURIComponent(decodedText)
+          }).then(() => {
+            document.getElementById("status").innerText = "Saved to Sheet: " + decodedText;
+          });
+        }
+      ).then(() => {
+        document.getElementById("status").innerText = "Camera Active! Continuous Scanning ON...";
+      }).catch(err => {
+        document.getElementById("status").innerText = "Camera Access Error: " + err;
+      });
+    }
+  </script>
+
+</body>
+</html>
